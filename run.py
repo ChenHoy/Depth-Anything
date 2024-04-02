@@ -25,9 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--img_path", type=str)
     parser.add_argument("--outdir", type=str, default="./vis_depth")
-    parser.add_argument(
-        "--encoder", type=str, default="vitl", choices=["vits", "vitb", "vitl"]
-    )
+    parser.add_argument("--encoder", type=str, default="vitl", choices=["vits", "vitb", "vitl"])
     parser.add_argument(
         "--save_array",
         action="store_true",
@@ -73,15 +71,10 @@ def visualize(depth: torch.Tensor, raw_image: np.ndarray, args, filename) -> np.
             depth_rgb,
         )
     else:
-        split_region = (
-            np.ones((raw_image.shape[0], margin_width, 3), dtype=np.uint8) * 255
-        )
+        split_region = np.ones((raw_image.shape[0], margin_width, 3), dtype=np.uint8) * 255
         combined_results = cv2.hconcat([raw_image, split_region, depth_rgb])
 
-        caption_space = (
-            np.ones((caption_height, combined_results.shape[1], 3), dtype=np.uint8)
-            * 255
-        )
+        caption_space = np.ones((caption_height, combined_results.shape[1], 3), dtype=np.uint8) * 255
         captions = ["Raw image", "Depth Anything"]
         segment_width = w + margin_width
 
@@ -106,9 +99,7 @@ def visualize(depth: torch.Tensor, raw_image: np.ndarray, args, filename) -> np.
         final_result = cv2.vconcat([caption_space, combined_results])
 
         cv2.imwrite(
-            os.path.join(
-                args.outdir, filename[: filename.rfind(".")] + "_img_depth.png"
-            ),
+            os.path.join(args.outdir, filename[: filename.rfind(".")] + "_img_depth.png"),
             final_result,
         )
 
@@ -182,9 +173,7 @@ def get_images(input_path):
     return filenames
 
 
-def colorize_depth_maps(
-    depth_map, min_depth, max_depth, cmap="Spectral", valid_mask=None
-):
+def colorize_depth_maps(depth_map, min_depth, max_depth, cmap="Spectral", valid_mask=None):
     """Colorize depth maps."""
     import matplotlib
 
@@ -283,9 +272,7 @@ def main():
             depth = infer(depth_anything, image)
 
         # depth = F.interpolate(depth, (h, w), mode="bilinear", align_corners=False)[0, 0]
-        depth = F.interpolate(
-            depth[None], (h, w), mode="bilinear", align_corners=False
-        )[0, 0]
+        depth = F.interpolate(depth[None], (h, w), mode="bilinear", align_corners=False)[0, 0]
 
         if args.normalize:
             depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0

@@ -46,9 +46,7 @@ def build_model(config) -> DepthModel:
     except ModuleNotFoundError as e:
         # print the original error message
         print(e)
-        raise ValueError(
-            f"Model {config.model} not found. Refer above error for details."
-        ) from e
+        raise ValueError(f"Model {config.model} not found. Refer above error for details.") from e
     try:
         get_version = getattr(module, "get_version")
     except AttributeError as e:

@@ -36,9 +36,7 @@ def load_state_dict(model, state_dict):
     state_dict = state_dict.get("model", state_dict)
     # if model is a DataParallel model, then state_dict keys are prefixed with 'module.'
 
-    do_prefix = isinstance(
-        model, (torch.nn.DataParallel, torch.nn.parallel.DistributedDataParallel)
-    )
+    do_prefix = isinstance(model, (torch.nn.DataParallel, torch.nn.parallel.DistributedDataParallel))
     state = {}
     for k, v in state_dict.items():
         if k.startswith("module.") and not do_prefix:
