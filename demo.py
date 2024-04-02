@@ -3,6 +3,7 @@ import ipdb
 import os
 from pathlib import Path
 import glob
+import sys
 from typing import Union, Optional
 
 from PIL import Image
@@ -19,10 +20,44 @@ from metric_depth.zoedepth.utils.config import get_config
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+sys.path.append("metric_depth")
 
-def colorize_depth_maps(
-    depth_map, min_depth, max_depth, cmap="Spectral", valid_mask=None
-):
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--model", type=str, default="zoedepth", help="Name of the model to test")
+    parser.add_argument(
+        "-w",
+        "--weights",
+        type=str,
+        default="checkpoints/depth_anything_metric_depth_indoor.pt",
+        help="Pretrained resource to use for fetching weights.",
+    )
+    parser.add_argument(
+        "-i",
+        "--input_dir",
+        type=str,
+        default="./data",
+        help="Directory containing images to process",
+    )
+    parser.add_argument(
+        "-o",
+        "--output_dir",
+        type=str,
+        default="./output",
+        help="Directory to save processed point clouds",
+    )
+    parser.add_argument(
+        "--normalize",
+        dest="normalize",
+        action="store_true",
+        help="normalize the depth map to [0, 1.0]",
+    )
+
+    return parser.parse_args()
+
+
+def colorize_depth_maps(depth_map, min_depth, max_depth, cmap="Spectral", valid_mask=None):
     """Colorize depth maps."""
     import matplotlib
 
@@ -98,9 +133,7 @@ def preprocess(image_raw: np.ndarray) -> torch.Tensor:
     return image_tensor
 
 
-def postprocess(
-    pred: torch.Tensor, ht: int, wd: int, normalize: bool = False
-) -> torch.Tensor:
+def postprocess(pred: torch.Tensor, ht: int, wd: int, normalize: bool = False) -> torch.Tensor:
 
     if pred.ndim == 3:
         pred = F.interpolate(pred[None], (ht, wd), mode="bilinear", align_corners=False)
@@ -198,6 +231,8 @@ def main(args):
     # Lets not pick a fight with the model's dataloader
     if "indoor" in args.weights:
         dataset = "nyu"
+    elif "outdoor" in args.weights:
+        dataset = "kitti"
     elif "kitti" in args.weights:
         dataset = "kitti"
     else:
@@ -218,37 +253,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m", "--model", type=str, default="zoedepth", help="Name of the model to test"
-    )
-    parser.add_argument(
-        "-w",
-        "--weights",
-        type=str,
-        default="checkpoints/depth_anything_metric_depth_indoor.pt",
-        help="Pretrained resource to use for fetching weights.",
-    )
-    parser.add_argument(
-        "-i",
-        "--input_dir",
-        type=str,
-        default="./data",
-        help="Directory containing images to process",
-    )
-    parser.add_argument(
-        "-o",
-        "--output_dir",
-        type=str,
-        default="./output",
-        help="Directory to save processed point clouds",
-    )
-    parser.add_argument(
-        "--normalize",
-        dest="normalize",
-        action="store_true",
-        help="normalize the depth map to [0, 1.0]",
-    )
-
-    args = parser.parse_args()
+    args = parse_args()
     main(args)
