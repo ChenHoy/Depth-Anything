@@ -141,14 +141,24 @@ class Resize(object):
                     # fit height
                     scale_width = scale_height
             else:
-                raise ValueError(f"resize_method {self.__resize_method} not implemented")
+                raise ValueError(
+                    f"resize_method {self.__resize_method} not implemented"
+                )
 
         if self.__resize_method == "lower_bound":
-            new_height = self.constrain_to_multiple_of(scale_height * height, min_val=self.__height)
-            new_width = self.constrain_to_multiple_of(scale_width * width, min_val=self.__width)
+            new_height = self.constrain_to_multiple_of(
+                scale_height * height, min_val=self.__height
+            )
+            new_width = self.constrain_to_multiple_of(
+                scale_width * width, min_val=self.__width
+            )
         elif self.__resize_method == "upper_bound":
-            new_height = self.constrain_to_multiple_of(scale_height * height, max_val=self.__height)
-            new_width = self.constrain_to_multiple_of(scale_width * width, max_val=self.__width)
+            new_height = self.constrain_to_multiple_of(
+                scale_height * height, max_val=self.__height
+            )
+            new_width = self.constrain_to_multiple_of(
+                scale_width * width, max_val=self.__width
+            )
         elif self.__resize_method == "minimal":
             new_height = self.constrain_to_multiple_of(scale_height * height)
             new_width = self.constrain_to_multiple_of(scale_width * width)
@@ -159,19 +169,35 @@ class Resize(object):
 
     def __call__(self, x):
         width, height = self.get_size(*x.shape[-2:][::-1])
-        return nn.functional.interpolate(x, (height, width), mode="bilinear", align_corners=True)
+        return nn.functional.interpolate(
+            x, (height, width), mode="bilinear", align_corners=True
+        )
 
 
 class PrepForMidas(object):
-    def __init__(self, resize_mode="minimal", keep_aspect_ratio=True, img_size=384, do_resize=True):
+    def __init__(
+        self,
+        resize_mode="minimal",
+        keep_aspect_ratio=True,
+        img_size=384,
+        do_resize=True,
+    ):
         if isinstance(img_size, int):
             img_size = (img_size, img_size)
         net_h, net_w = img_size
         # self.normalization = Normalize(
         #     mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-        self.normalization = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        self.normalization = Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
         self.resizer = (
-            Resize(net_w, net_h, keep_aspect_ratio=keep_aspect_ratio, ensure_multiple_of=14, resize_method=resize_mode)
+            Resize(
+                net_w,
+                net_h,
+                keep_aspect_ratio=keep_aspect_ratio,
+                ensure_multiple_of=14,
+                resize_method=resize_mode,
+            )
             if do_resize
             else nn.Identity()
         )
@@ -218,7 +244,9 @@ class DepthAnythingCore(nn.Module):
         self.set_fetch_features(fetch_features)
 
         self.prep = PrepForMidas(
-            keep_aspect_ratio=keep_aspect_ratio, img_size=img_size, do_resize=kwargs.get("do_resize", True)
+            keep_aspect_ratio=keep_aspect_ratio,
+            img_size=img_size,
+            do_resize=kwargs.get("do_resize", True),
         )
 
         if freeze_bn:
@@ -301,29 +329,39 @@ class DepthAnythingCore(nn.Module):
             self.remove_hooks()
         if "out_conv" in self.layer_names:
             self.handles.append(
-                list(midas.depth_head.scratch.output_conv2.children())[1].register_forward_hook(
-                    get_activation("out_conv", self.core_out)
-                )
+                list(midas.depth_head.scratch.output_conv2.children())[
+                    1
+                ].register_forward_hook(get_activation("out_conv", self.core_out))
             )
         if "r4" in self.layer_names:
             self.handles.append(
-                midas.depth_head.scratch.refinenet4.register_forward_hook(get_activation("r4", self.core_out))
+                midas.depth_head.scratch.refinenet4.register_forward_hook(
+                    get_activation("r4", self.core_out)
+                )
             )
         if "r3" in self.layer_names:
             self.handles.append(
-                midas.depth_head.scratch.refinenet3.register_forward_hook(get_activation("r3", self.core_out))
+                midas.depth_head.scratch.refinenet3.register_forward_hook(
+                    get_activation("r3", self.core_out)
+                )
             )
         if "r2" in self.layer_names:
             self.handles.append(
-                midas.depth_head.scratch.refinenet2.register_forward_hook(get_activation("r2", self.core_out))
+                midas.depth_head.scratch.refinenet2.register_forward_hook(
+                    get_activation("r2", self.core_out)
+                )
             )
         if "r1" in self.layer_names:
             self.handles.append(
-                midas.depth_head.scratch.refinenet1.register_forward_hook(get_activation("r1", self.core_out))
+                midas.depth_head.scratch.refinenet1.register_forward_hook(
+                    get_activation("r1", self.core_out)
+                )
             )
         if "l4_rn" in self.layer_names:
             self.handles.append(
-                midas.depth_head.scratch.layer4_rn.register_forward_hook(get_activation("l4_rn", self.core_out))
+                midas.depth_head.scratch.layer4_rn.register_forward_hook(
+                    get_activation("l4_rn", self.core_out)
+                )
             )
 
         return self
@@ -354,9 +392,13 @@ class DepthAnythingCore(nn.Module):
             kwargs = DepthAnythingCore.parse_img_size(kwargs)
         img_size = kwargs.pop("img_size", [384, 384])
 
-        depth_anything = DPT_DINOv2(out_channels=[256, 512, 1024, 1024], use_clstoken=False)
+        depth_anything = DPT_DINOv2(
+            out_channels=[256, 512, 1024, 1024], use_clstoken=False
+        )
 
-        state_dict = torch.load("./checkpoints/depth_anything_vitl14.pth", map_location="cpu")
+        state_dict = torch.load(
+            "./checkpoints/depth_anything_vitl14.pth", map_location="cpu"
+        )
         depth_anything.load_state_dict(state_dict)
 
         kwargs.update({"keep_aspect_ratio": force_keep_ar})
@@ -377,9 +419,13 @@ class DepthAnythingCore(nn.Module):
     def parse_img_size(config):
         assert "img_size" in config
         if isinstance(config["img_size"], str):
-            assert "," in config["img_size"], "img_size should be a string with comma separated img_size=H,W"
+            assert (
+                "," in config["img_size"]
+            ), "img_size should be a string with comma separated img_size=H,W"
             config["img_size"] = list(map(int, config["img_size"].split(",")))
-            assert len(config["img_size"]) == 2, "img_size should be a string with comma separated img_size=H,W"
+            assert (
+                len(config["img_size"]) == 2
+            ), "img_size should be a string with comma separated img_size=H,W"
         elif isinstance(config["img_size"], int):
             config["img_size"] = [config["img_size"], config["img_size"]]
         else:

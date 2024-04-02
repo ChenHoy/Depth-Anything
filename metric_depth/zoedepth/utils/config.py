@@ -308,7 +308,9 @@ def get_model_config(model_name, model_version=None):
         easydict: the config dictionary for the model.
     """
     config_fname = (
-        f"config_{model_name}_{model_version}.json" if model_version is not None else f"config_{model_name}.json"
+        f"config_{model_name}_{model_version}.json"
+        if model_version is not None
+        else f"config_{model_name}.json"
     )
     config_file = os.path.join(ROOT, "models", model_name, config_fname)
     if not os.path.exists(config_file):
@@ -361,6 +363,7 @@ def get_config(model_name, mode="train", dataset=None, **overwrite_kwargs):
         model_name (str): name of the desired model.
         mode (str, optional): "train" or "infer". Defaults to 'train'.
         dataset (str, optional): If specified, the corresponding dataset configuration is loaded as well. Defaults to None.
+
     Keyword Args: key-value pairs of arguments to overwrite the default config.
 
     The order of precedence for overwriting the config is (Higher precedence first):
@@ -417,9 +420,7 @@ def get_config(model_name, mode="train", dataset=None, **overwrite_kwargs):
     if mode == "train":
         orig_dataset = dataset
         if dataset == "mix":
-            dataset = (
-                "nyu"  # Use nyu as default for mix. Dataset config is changed accordingly while loading the dataloader
-            )
+            dataset = "nyu"  # Use nyu as default for mix. Dataset config is changed accordingly while loading the dataloader
         if dataset is not None:
             config["project"] = f"MonoDepth3-{orig_dataset}"  # Set project for wandb
 
